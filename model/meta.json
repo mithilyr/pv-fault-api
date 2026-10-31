@@ -1,0 +1,42 @@
+{
+  "source_experiment": "exp_002a_fault3_relabel_only",
+  "model": "xgboost",
+  "feature_columns": [
+    "current_a",
+    "voltage_v",
+    "Vdc",
+    "ia",
+    "ib",
+    "ic",
+    "va",
+    "vb",
+    "vc",
+    "Iabc",
+    "If",
+    "Vabc",
+    "Vf",
+    "operation_mode"
+  ],
+  "classes": [
+    "fault_1",
+    "fault_2",
+    "fault_3",
+    "fault_4",
+    "fault_5",
+    "fault_6",
+    "fault_7",
+    "healthy"
+  ],
+  "operation_mode_encoding": {
+    "MPPT": 1,
+    "IPPT": 0
+  },
+  "test_metrics": {
+    "accuracy": 0.8691436085516662,
+    "macro_f1": 0.8642494914241381,
+    "n_train": 1730769,
+    "n_test": 432711,
+    "train_seconds": 133.5
+  },
+  "dataset": "GPVS-Faults (Bakdi et al., Mendeley Data, DOI 10.17632/n76t439f65.1, CC BY 4.0)"
+}
