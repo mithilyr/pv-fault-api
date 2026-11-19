@@ -2,7 +2,7 @@
 
 An HTTP API that takes a window of electrical readings from a grid-connected solar PV system and returns one diagnosis: healthy, one of seven fault types, or uncertain. Each diagnosis comes with the features that drove it.
 
-The model comes from my research project on explainable machine-learning fault detection for solar PV. This repo turns that model into a service. The API layer is written in [Ballerina](https://ballerina.io), an open-source language from [Choreo Labs](https://choreolabs.com) (formerly WSO2).
+The model comes from my research project on explainable machine-learning fault detection for solar PV. This repo turns that model into a service and runs it behind two [Choreo Labs](https://choreolabs.com) (formerly WSO2) products: a gateway written in [Ballerina](https://ballerina.io), and Choreo API Manager, which handles OAuth2 tokens, subscriptions and rate limits.
 
 ## Use case
 
@@ -13,14 +13,15 @@ Solar plants stream electrical readings from their inverters all day, but many f
 ## Architecture
 
 ```
-client --POST /api/v1/diagnose--> Ballerina gateway (:9090) --POST /predict--> Python model service (:8000)
-                                  validates the window,                        XGBoost classifier +
-                                  votes across readings,                       per-reading SHAP values
-                                  returns one diagnosis
+client --HTTPS + OAuth2 token--> Choreo API Manager gateway (:8243) --> Ballerina gateway (:9090) --> Python model service (:8000)
+        POST /pv/1.0.0/diagnose  checks the token and subscription,    validates the window,        XGBoost classifier +
+                                 applies the rate limit (Bronze tier)  votes across readings,       per-reading SHAP values
+                                                                       returns one diagnosis
 ```
 
 | Part | Folder | What it does |
 |---|---|---|
+| API management | `apim/` | Docker Compose file for Choreo API Manager 4.7.0, the OpenAPI definition (generated from the Ballerina service with `bal openapi`), and `setup.sh`, which publishes the API, creates a client app, subscribes it and fetches a token through the API Manager REST APIs. |
 | Ballerina gateway | `gateway/` | Validates input, calls the model service, turns per-reading predictions into one window verdict with an explanation. Has unit tests. |
 | Model service | `model-service/` | FastAPI service. Classifies each reading and returns class probabilities plus the top 3 SHAP features, using XGBoost's built-in `pred_contribs`. |
 | Model artifact | `model/` | Trained XGBoost model, metadata, and 16 real held-out readings. |
@@ -46,12 +47,29 @@ cd gateway
 bal run
 
 # 3. Try it (new terminal, from the repo root)
-curl -X POST http://localhost:9090/api/v1/diagnose -H "Content-Type: application/json" -d "@samples/fault_3.json"
+curl.exe -X POST http://localhost:9090/api/v1/diagnose -H "Content-Type: application/json" -d "@samples/fault_3.json"
 ```
 
 If `bal` reports "Compatible JRE not found", point `JAVA_HOME` at the JRE bundled with Ballerina for that terminal, for example `C:\Program Files\Ballerina\dependencies\jdk-25.0.3+9-jre`.
 
-Gateway tests: `cd gateway; bal test`.
+Gateway tests: `cd gateway; bal test`. If the gateway is already running on 9090, set `$env:BAL_CONFIG_VAR_PORT = "9099"` first.
+
+## Run it behind Choreo API Manager
+
+You also need Docker Desktop and Git Bash (for `setup.sh`). Start the model service and gateway as above, then from the repo root:
+
+```powershell
+# 4. Start API Manager (first start takes about 5 minutes)
+docker compose -f apim/docker-compose.yml up -d
+
+# 5. Publish the API, create a client app, subscribe it and get a token
+bash apim/setup.sh
+
+# 6. Call the API through the API Manager gateway
+curl.exe -k -X POST https://localhost:8243/pv/1.0.0/diagnose -H "Authorization: Bearer $(Get-Content apim/.token)" -H "Content-Type: application/json" -d "@samples/fault_3.json"
+```
+
+A call without a token returns `401 Missing Credentials`. The token lasts one hour; run `setup.sh` again for a new one (it reuses everything it created before). The Publisher (https://localhost:9443/publisher) and Developer Portal (https://localhost:9443/devportal) use the container's default `admin` / `admin` login, which is only for this local test setup.
 
 ## API
 
@@ -101,8 +119,7 @@ Response (shape):
 
 ## Roadmap
 
-- Put Choreo API Manager (formerly WSO2 API Manager) in front of the gateway for API keys and rate limiting.
-- Containerise both services with Docker.
+- Containerise the model service and gateway so the whole stack starts with one `docker compose up`.
 - Retrain on data logged at the slower rates real plants use (seconds to minutes).
 
 ## Licence

@@ -1,0 +1,192 @@
+openapi: 3.0.1
+info:
+  title: PV Fault Diagnosis API
+  description: Diagnoses solar PV faults from a window of electrical readings. Generated from gateway/main.bal with `bal openapi`.
+  version: 1.0.0
+servers:
+- url: "{server}:{port}/api/v1"
+  variables:
+    server:
+      default: http://localhost
+    port:
+      default: "9090"
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+  /diagnose:
+    post:
+      operationId: postDiagnose
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiagnoseRequest"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diagnosis"
+        "400":
+          description: BadRequest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPayload"
+        "502":
+          description: BadGateway
+components:
+  schemas:
+    DiagnoseRequest:
+      required:
+      - readings
+      type: object
+      properties:
+        readings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reading"
+      additionalProperties: false
+    Diagnosis:
+      required:
+      - agreement
+      - confidence
+      - diagnosis
+      - explanation
+      - fault_fraction
+      - status
+      - votes
+      - window_size
+      type: object
+      properties:
+        status:
+          type: string
+        diagnosis:
+          type: string
+        confidence:
+          type: number
+          format: float
+        agreement:
+          type: number
+          format: float
+        fault_fraction:
+          type: number
+          format: float
+        window_size:
+          type: integer
+          format: int64
+        votes:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        explanation:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeatureImpact"
+      additionalProperties: false
+    ErrorPayload:
+      required:
+      - message
+      - method
+      - path
+      - reason
+      - status
+      - timestamp
+      type: object
+      properties:
+        timestamp:
+          type: string
+        status:
+          type: integer
+          format: int64
+        reason:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        method:
+          type: string
+    FeatureImpact:
+      required:
+      - feature
+      - mean_abs_shap
+      type: object
+      properties:
+        feature:
+          type: string
+        mean_abs_shap:
+          type: number
+          format: float
+      additionalProperties: false
+    Reading:
+      required:
+      - Iabc
+      - If
+      - Vabc
+      - Vdc
+      - Vf
+      - current_a
+      - ia
+      - ib
+      - ic
+      - operation_mode
+      - va
+      - vb
+      - vc
+      - voltage_v
+      type: object
+      properties:
+        current_a:
+          type: number
+          format: float
+        voltage_v:
+          type: number
+          format: float
+        Vdc:
+          type: number
+          format: float
+        ia:
+          type: number
+          format: float
+        ib:
+          type: number
+          format: float
+        ic:
+          type: number
+          format: float
+        va:
+          type: number
+          format: float
+        vb:
+          type: number
+          format: float
+        vc:
+          type: number
+          format: float
+        Iabc:
+          type: number
+          format: float
+        If:
+          type: number
+          format: float
+        Vabc:
+          type: number
+          format: float
+        Vf:
+          type: number
+          format: float
+        operation_mode:
+          type: string
+      additionalProperties: false

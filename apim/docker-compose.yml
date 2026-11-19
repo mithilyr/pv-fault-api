@@ -1,0 +1,20 @@
+# Local Choreo API Manager (formerly WSO2 API Manager) 4.7.0 for this project.
+# Start: docker compose -f apim/docker-compose.yml up -d   (first start takes a few minutes)
+# Publisher:        https://localhost:9443/publisher   (admin / admin, local test only)
+# Developer Portal: https://localhost:9443/devportal
+# API gateway:      https://localhost:8243
+services:
+  apim:
+    image: wso2/wso2am:4.7.0
+    container_name: pv-apim
+    ports:
+      - "9443:9443"   # management console, Publisher, Developer Portal, OAuth2
+      - "8243:8243"   # API gateway (HTTPS)
+      - "8280:8280"   # API gateway (HTTP)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # lets the gateway reach the Ballerina service on the host
+    healthcheck:
+      test: ["CMD-SHELL", "curl -skf https://localhost:9443/services/Version || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
