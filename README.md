@@ -2,7 +2,11 @@
 
 An HTTP API that takes a window of electrical readings from a grid-connected solar PV system and returns one diagnosis: healthy, one of seven fault types, or uncertain. Each diagnosis comes with the features that drove it.
 
-The model comes from my research project on explainable machine-learning fault detection for solar PV. This repo turns that model into a service. The API layer is written in [Ballerina](https://ballerina.io).
+The model comes from my research project on explainable machine-learning fault detection for solar PV. This repo turns that model into a service. The API layer is written in [Ballerina](https://ballerina.io), an open-source language from [Choreo Labs](https://choreolabs.com) (formerly WSO2).
+
+## Use case
+
+Solar plants stream electrical readings from their inverters all day, but many faults go unnoticed until output drops in a monthly report or someone visits the site. A monitoring system can send a window of readings to this API and get back a named fault (for example partial shading or a grid voltage sag) with the measurements behind it, so a technician knows what to check before they go out. Because it is an HTTP API, dashboards, alerting tools and vendor software can all call the same service.
 
 > **Built with AI assistance.** I am an electrical and electronics engineering student, not a trained software engineer. I directed the design, ran and debugged everything, and Claude (Anthropic) wrote most of the code. I can explain every file here.
 
@@ -97,9 +101,10 @@ Response (shape):
 
 ## Roadmap
 
-- Put WSO2 API Manager in front of the gateway for API keys and rate limiting.
+- Put Choreo API Manager (formerly WSO2 API Manager) in front of the gateway for API keys and rate limiting.
 - Containerise both services with Docker.
+- Retrain on data logged at the slower rates real plants use (seconds to minutes).
 
 ## Licence
 
-No licence is set yet. The model artifact derives from CC BY 4.0 data and must keep the attribution above.
+Code: [MIT](LICENSE). The model artifact derives from the CC BY 4.0 GPVS-Faults dataset and must keep the attribution above.

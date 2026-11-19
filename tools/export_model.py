@@ -6,7 +6,7 @@ writes only into this project's model/ folder. It does not touch the thesis
 experiment logs.
 
 Usage (thesis venv, which has xgboost/pandas/scikit-learn):
-    <thesis>\\.venv\\Scripts\\python.exe tools/export_model.py
+    <thesis>\\.venv\\Scripts\\python.exe tools/export_model.py --thesis-root <thesis>
 """
 from __future__ import annotations
 
@@ -19,7 +19,6 @@ from pathlib import Path
 import numpy as np
 from sklearn.metrics import accuracy_score, f1_score
 
-DEFAULT_THESIS_ROOT = Path(r"E:\SecondBrain\Research\01_Projects\EEET4000_SolarPV_AI")
 EXPERIMENT = "exp_002a_fault3_relabel_only"
 SAMPLES_PER_CLASS = 2
 OUT_DIR = Path(__file__).resolve().parents[1] / "model"
@@ -27,7 +26,7 @@ OUT_DIR = Path(__file__).resolve().parents[1] / "model"
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--thesis-root", type=Path, default=DEFAULT_THESIS_ROOT)
+    parser.add_argument("--thesis-root", type=Path, required=True, help="path to the (private) thesis repo")
     args = parser.parse_args()
 
     sys.path.insert(0, str(args.thesis_root / "src"))
