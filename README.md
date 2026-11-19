@@ -71,6 +71,14 @@ curl.exe -k -X POST https://localhost:8243/pv/1.0.0/diagnose -H "Authorization: 
 
 A call without a token returns `401 Missing Credentials`. The token lasts one hour; run `setup.sh` again for a new one (it reuses everything it created before). The Publisher (https://localhost:9443/publisher) and Developer Portal (https://localhost:9443/devportal) use the container's default `admin` / `admin` login, which is only for this local test setup.
 
+### Troubleshooting
+
+| What you see | Cause | Fix |
+|---|---|---|
+| `{"code":"900901","message":"Invalid Credentials",...}` | The token in `apim/.token` is older than one hour. | Run `bash apim/setup.sh` again (about 10 seconds), then repeat the call. |
+| `Cannot find path ...\apim\.token` or `curl: Failed to open samples/fault_3.json` | The command ran outside the repo root. | `cd` into the `pv-fault-api` folder first. The paths are relative to it. |
+| `401 Missing Credentials` | The `Authorization` header is missing or empty. | Check that `apim/.token` exists and the header reads `Bearer <token>`. |
+
 ## API
 
 `POST /api/v1/diagnose` takes `{"readings": [ ... ]}`. Each reading has 14 fields: `current_a`, `voltage_v`, `Vdc`, `ia`, `ib`, `ic`, `va`, `vb`, `vc`, `Iabc`, `If`, `Vabc`, `Vf` and `operation_mode` (`"MPPT"` or `"IPPT"`). See `samples/` for full examples. Up to 5000 readings per request.
